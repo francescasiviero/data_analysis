@@ -1,0 +1,387 @@
+---
+title: "Commands and formats"
+author: "FraSiv"
+date: '2022-06-20'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## General
+
+#### **Creating a variable from a file**
+
+```{r}
+read.table("nameofthefile", sep=",", header= T, rownames=1, stringAsFactors=T)
+
+#header=T if the first row is composed by column names, almost always it is.
+#sep can be also "\t"
+
+#rownames=1 to have the first column set as rownames. If the row.names are in another column, just put another number. Or you can set the row.names if the file does not have it by adding a vector or a c(....).
+
+#nameofthefile -> relative or absoluta path, better if you have the file in your wd.
+
+#col.names -> you can use it to set the col.names of the file. 
+
+#stringAsFactors=T makes every character vector as a factor
+
+#fill	-> logical. If TRUE then in case the rows have unequal length, blank fields are implicitly added.
+
+read.delim()
+#in case you have this error "EOF within quoted string"
+```
+
+You can understand if you forget to put `header=T` if, when retrieving the `colnames(variable)` you get a vector containing a list of V1,V2,V3 and so on.
+
+#### **Output of the file**
+
+```{r}
+write.table(variabletouse, "nameoftheoutput", sep="\t", col.names=NA, row.names=T)
+
+#sep also "," to have .csv
+#By default there is no column name for a column of row names. If col.names = NA and row.names = TRUE a blank column name is added, which is the convention used for CSV files to be read by spreadsheets.
+
+#rownames=T -> either a logical value indicating whether the row names of x are to be written along with x, or a character vector of row names to be written.
+```
+
+#### **Conversion of the file**
+
+```{r}
+strsplit(vector_to_split, element_to_use_as_split)
+#Split the elements of a character vector x into substrings according to the matches to substring split within them.
+#The splitting element should be a character vactor.
+
+unlist(listname)
+#use it after strsplit in the argument of matrix.
+
+matrix(datavector, nrow=1, ncol=1, byrow=T)
+#creates a matrix
+#byrow=T -> logical. If FALSE (the default) the matrix is filled by columns, otherwise the matrix is filled by rows.
+#rownames.force=T -> logical indicating if the resulting matrix should have character (rather than NULL) rownames. The default, NA, uses NULL rownames if the data frame has ‘automatic’ row.names or for a zero-row data frame.
+
+as.matrix()#same as previous
+#converts the argument in a matrix
+
+data.frame(arguments, row.names=1, stringsAsFactors=T)
+#row.names as for read.table
+#stringsAsFactors=T -> like read.table
+#A data frame is a list of variables of the same number of rows with unique row names, given class "data.frame". If no variables are included, the row names determine the number of rows.
+#Vectors of the same length
+
+as.data.frame(x, row.names=NULL, col.names= c(.....))
+#Functions to check if an object is a data frame, or coerce it if possible.
+#row.names=NULL or a character vector giving the row names for the data frame. Missing values are not allowed.
+
+table(name.dataframe$column.with.the.object.to.count.the.second.object.for)
+df_counts<-table(df_promoter$ATAC.seqnames)
+#In this case the table function counts how many promoters are associated to each seqname
+```
+
+#### Violin Plots
+
+```{r}
+plot.df <- data.frame(tmp$Belonging_Cluster, tmp$silhouetteValue)
+names(plot.df) <- c("clusters", "silhouette")
+#Modifications
+head(plot.df)
+class(plot.df$clusters)
+#output="interger", we need a factor variable to make a violin plot
+plot.df$clusters <- factor(plot.df$clusters)
+class(plot.df$clusters)
+#now it's a factor
+#
+library(ggplot2)
+p <- ggplot(plot.df, aes(x=clusters, y=silhouette)) + 
+  geom_violin()
+p
+```
+
+#### Grep and Sub
+
+```{r}
+#grep takes from the x what corresponds to the pattern
+grep(pattern, x, ignore.case = FALSE, perl = FALSE, value = FALSE,
+     fixed = FALSE, useBytes = FALSE, invert = FALSE)
+#sub substitutes in the x the pattern with the replacement
+sub(pattern, replacement, x, ignore.case = FALSE, perl = FALSE,
+    fixed = FALSE, useBytes = FALSE)
+
+# pattern -> character string containing a regular expression (or character string for fixed = TRUE) to be matched in the given character vector. 
+#Coerced by as.character to a character string if possible. If a character vector of length 2 or more is supplied, the first element is used with a warning. Missing values are allowed except for regexpr and gregexpr.
+```
+
+## **Requirements of functions**
+
+#### EdgeR
+
+```{r}
+#To do before the PCA if the dataset is not a CPM table but just counts
+library("BiocManager")
+library("edgeR")
+count_table <- as.matrix()#data.frame created with reead.table
+cpm <- edgeR::cpm(count_table)
+write.table(cpm, "nameofthefile", sep="\t", col.names=NA)
+```
+
+#### PCA
+
+```{r}
+library("docker4seq")
+pca(
+  experiment.table = "./counts.txt", #should be in your wd and should be a normalised count table (CPM), FPKM or TPM table (use EdgeR)
+  type = c("counts"), #since the input is cpm which is tab delimited
+  covariatesInNames = FALSE, #can be also T, check the colnames
+  samplesName = TRUE, #name plotted in the graph
+  principal.components = c(1, 2),
+  legend.position = c("bottom", "bottomleft", "left", "topleft", "top", "topright",
+    "right", "center"),
+  pdf = TRUE,
+  output.folder = "C:/path" #or getwd()
+)
+```
+
+#### SAVER imputation (never did)
+
+```{r}
+install.packages("SAVER")
+library("SAVER")
+#If you work in R studio you have to specify the working directory with forward slashes
+setwd("/somewhere/in_your_computer/path_to_data")
+INPUT = "nameoftherawdata.csv"
+SEPARATOR = ","
+THREADS = 1 # the number of cores dedicated to run such analysis
+
+#I don't understand this line
+setwd(WDraw.data) <- read.table(INPUT, sep=SEPARATOR,header = T, row.names=1)
+
+#When did we define the raw.data variable???
+dataset<- as.matrix(raw.data)
+dataset.saver <- saver(dataset, ncores = THREADS,estimates.only = TRUE)
+write.table(dataset.saver, paste("saver", INPUT,sep="_"), sep=SEPARATOR, col.names=NA)
+
+```
+
+#### SAVER to CPM file
+
+```{r}
+#Start from a SAVER imputed .csv file 
+#Create the function counts2cpm
+counts2cpm <- function(file, sep = ","){
+  tmp <- read.table(file, sep=sep, header=T, row.names=1)
+  col.sum <- apply(tmp, 2, sum)
+  tmp1 <- t(tmp)/col.sum
+  tmp1 <- t(tmp1)
+  tmp1 <- tmp1 * 1000000
+  write.table(tmp1, "cpm.csv", sep=",",
+              col.names=NA)
+  write.table(log2(tmp1 + 1), "log2cpm.csv",
+              sep=",", col.names=NA)
+}
+
+#Recall the function and run it
+counts2cpm(file="saver.csv", sep=",")
+file.rename(from="log2cpm.csv", to="sample_log2cpm.csv")
+```
+
+#### UMAP
+
+You need a log2cpm count table with the `countstocpm` function.
+
+```{r}
+library("umap")
+library("ggplot2")
+
+sample <- read.table("log2cpm.csv", sep=",", header=T, row.names=1)
+sample.umap <- umap(t(sample), random_state=111, n_epochs = 1000)
+df=data.frame(x=as.numeric(sample.umap$layout[,1]),y=as.numeric(sample.umap$layout[,2]))
+
+#if you have different cell lines
+cell_names <- strsplit(colnames(sample), "\\.")
+
+#Adding a column with the cell lines to the df dataframe and factor it
+matrix_cellnames <- matrix(unlist(cell_names), ncol =2, byrow=TRUE)
+df$cell_line=matrix_cellnames[,2]
+df$cell_line <- factor(t$cell_line)
+
+#plotting UMAP
+sp <- ggplot(df, aes(x=x,y=y, color=cell_line)) + geom_point(pch=19, cex=0.3)
+pdf("sampleUMAP.pdf")
+print(sp)
+dev.off()
+```
+
+#### tSNE
+
+You do not need a PCA before (to check)
+
+```{r}
+library("Rtsne")
+library("ggplot2")
+
+tmp <- read.table("log2cpm.csv", sep=",", header=T, row.names=1)
+tsne.out <- Rtsne(as.matrix(t(tmp)), pca= FALSE, perplexity = 30, theta=0.0)
+df=data.frame(x= as.numeric(tsne.out$Y[,1]),y=tsne.out$Y[,2])
+
+#If you have different cell lines
+cell_names <- strsplit(colnames(tmp), "\\.")
+matrix_cellnames <- matrix(unlist(cell_names), ncol =2, byrow=TRUE)
+df$cell_line=matrix_cellnames[,2]
+df$cell_line <- factor(t$cell_line)
+
+
+#plotting the tsne
+sp <- ggplot(df, aes(x=x,y=y, color=cell_line)) + geom_point(pch=19, cex=0.3)
+pdf("sampletSNE.pdf")
+print(sp)
+dev.off()
+```
+
+#### Plot selection
+
+```{r}
+#Considering the dataframe that is used to plot both UMAP and tSNE, you can select the elements that have a value of coordinate in a specific range.
+x_bigger_20 <- df[which(df$x > 20), ]
+#To know how many there are
+lenght(x_bigger_20)
+```
+
+#### DESeq2
+
+You need a matrix format for your data and a colData dataframe containing the sample name and the conditions as factors.
+
+```{r}
+#Create the dataframe
+sample_df<-read.table("sample.txt",header = TRUE, sep="\t", row.names = 1)
+sample_matrix<-as.matrix(sample_df, rownames.force=NA)
+
+#create the two vectors containing the samples and the conditions
+#1. take the colnames of the two matrix and put it in a vector
+sample_names <- colnames(sample_matrix)
+#2. create a new vector that contain three rows contaning ctrl and then three row with treated
+conditions<-c(rep("ctrl",3), rep("treated",3))#this is an example
+
+#create the dataframe combining the two vectors. The names of the vectors will be considered automatically as header
+coldata_sample <- data.frame(sample_names, conditions)
+
+#put the rownames in the new dataframe taking them from the vectors we created before
+rownames(coldata_sample)<-samples_names
+
+#factor the conditions column
+coldata_sample$conditions<-factor(coldata_sample$conditions)
+```
+
+Run DESeq
+
+You will need:
+
+-   countData (the matrix with the data)
+
+-   colData (our dataframe containing the samples and the conditions)
+
+-   design = the parameter for which we have to perform differential expression.
+
+```{r}
+library("DESeq2")
+# DESeqDatasetFromMatrix generate a Dataset on which the DESeq can be run. 
+dds_sample <- DESeqDatasetFromMatrix(countData = sample_matrix, colData = coldata_sample, design=~conditions)
+
+# Use the DESeq function to perform the DE analysis
+dds_sample <- DESeq(dds_sample)
+
+3. # Save the results in a variable
+res <- results(dds_sample)
+```
+
+#### Filtering, intersect and play with dataframes
+
+```{r}
+# FILTER
+# Filter the data for adjusted pValue <=0.05 e |log2FoldChange|>=1. 
+#to check which column is which use head(res)
+res_filter<-res[which(res[,6]<=0.05 & abs(res[,2])>=1),]
+
+# This command creates a new variable taking all the rows from the res_* dataframe that have a value in the $padj column <=0.05 and the absolute value of the value in the colum lfc >=1. 
+# All the columns of the res_* dataframe are selected and maintained. 
+# You can see that which is followed by [..., ] the "..." are the rows, the space means all columns.
+
+#Save the filtered data into a file
+write.table(res_filter, file="DESeq_results_filter.txt", sep="\t", row.names=TRUE,col.names=TRUE)
+
+#removing columns from dataframes 
+drop_columns <- c("start", "end","width", "strand")
+ATAC_df <- ATAC[,!(colnames(ATAC) %in% drop_columns)]
+
+#INTERSECT
+#put the single cell data of the osimertinib treatment in a variable using read.table
+osi <- read.table("osi_log2CPM.csv", sep=",", header=T, row.names=1)
+
+#perform the filtering of the single cell data using the DE genes of RNAseq acute treatment
+intersection_osi_acute <- intersect(row.names(res_acute_filter), row.names(osi))
+
+#select the row of the data frame (osi) of the single cell experiment containing the DE genes in common between the single cell data and the DE genes acute treatment of bulkRNAseq
+osiUMAP_acute<-osi[which(row.names(osi)%in%intersection_osi_acute), ]
+
+#save the data in a csv file needed to run the UMAP function
+write.csv(osiUMAP_acute, "osiUMAP_acutelog2cpm.csv", sep=",")
+
+```
+
+#### K-means
+
+You need an UMAP data output variable. Not the dataframe used for plotting, the one created with
+
+`sample.umap <- umap(t(sample), random_state=111, n_epochs = 1000)`
+
+You can run it with **mkbmeans**
+
+```{r}
+library("mbkmeans")
+library("ggplot2")
+#To do kmeans we have to use kmeans function on the UMAP results only taking the layout component of the complex object.
+u_kmeans<-kmeans(umap_res$layout , 5)
+
+#Then you have plot the results that are contaneid in the kmeans results on the cluster component of the complex kmean result object of class kmeans. 
+#To plot and color the important thing is to have the color as.numeric otherwise the ggplot function doesn't work. 
+plot<- ggplot(u, aes(x=x,y=y)) + geom_point(pch=19, cex=0.3, color=as.numeric(u_kmeans$cluster))
+
+pdf("u_kmeans.pdf")
+print(plot)
+dev.off()
+```
+
+You can use **ClusterR**
+
+```{r}
+library("ClusterR")
+library("ggplot2")
+#use the Kmeans_arma function to do the clustering
+km <- KMeans_arma(data=umap_res$layout, clusters = 5, n_iter = 10, seed_mode = "random_subset", verbose = T, CENTROIDS = NULL)
+
+#verbose=T -> either TRUE or FALSE, indicating whether progress is printed during clustering
+
+predict <- predict_KMeans(umap_res$layout , km)
+
+plotR<- ggplot(u, aes(x=x,y=y)) + geom_point(pch=19, cex=0.3, color=as.numeric(predict()))
+
+pdf("ClusterR_kmeans.pdf")
+print(plotR)
+dev.off()
+```
+
+## Functions in R (from Provero)
+
+    logtransf <- function(x, base = 2, a = 1) {
+        log(x + a, base = base)
+    }
+
+-   the part in parentheses specifies the parameters of our function, similarly to what you see in the help of predefined functions.
+
+-   in this case our function has three parameters, named "x", "base" and "a"
+
+    -   x is mandatory, as it does not have a default value
+
+    -   "base" and "a" have default valued 2 and 1, respectively, so they do not have to be specified if you want to use these default values
+
+-   the part in curly brackets ("{") contains the code that transforms the arguments
